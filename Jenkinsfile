@@ -3,7 +3,7 @@ def app
 pipeline {
   agent {
     docker {
-      image 'node:18'
+      image 'node18-docker'
       args '-v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
@@ -13,11 +13,12 @@ pipeline {
   }
 
   stages {
-    stage('Git Checkout') {
+
+    stage('Checkout') {
       steps { checkout scm }
     }
 
-    stage('Application Build') {
+    stage('Build') {
       steps { sh 'chmod +x scripts/build.sh && ./scripts/build.sh' }
     }
 
@@ -25,15 +26,15 @@ pipeline {
       steps { sh 'chmod +x scripts/test.sh && ./scripts/test.sh' }
     }
 
-    stage('Docker Image Build') {
+    stage('Docker Build') {
       steps {
         script {
-          app = docker.build("${IMAGE_NAME}")
+          app = docker.build(IMAGE_NAME)
         }
       }
     }
 
-    stage('Docker Image Push') {
+    stage('Docker Push') {
       steps {
         script {
           docker.withRegistry('https://index.docker.io/v1/', 'docker_hub_creds_id') {
