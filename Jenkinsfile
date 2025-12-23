@@ -1,12 +1,7 @@
 def app
 
 pipeline {
-  agent {
-    docker {
-      image 'node18-docker'
-      args '-v /var/run/docker.sock:/var/run/docker.sock'
-    }
-  }
+  agent none
 
   environment {
     IMAGE_NAME = "nursultanmakhambet/cicd-pipeline"
@@ -15,18 +10,36 @@ pipeline {
   stages {
 
     stage('Checkout') {
-      steps { checkout scm }
+      agent any
+      steps {
+        checkout scm
+      }
     }
 
     stage('Build') {
-      steps { sh 'chmod +x scripts/build.sh && ./scripts/build.sh' }
+      agent {
+        docker {
+          image 'node:18'
+        }
+      }
+      steps {
+        sh 'chmod +x scripts/build.sh && ./scripts/build.sh'
+      }
     }
 
     stage('Tests') {
-      steps { sh 'chmod +x scripts/test.sh && ./scripts/test.sh' }
+      agent {
+        docker {
+          image 'node:18'
+        }
+      }
+      steps {
+        sh 'chmod +x scripts/test.sh && ./scripts/test.sh'
+      }
     }
 
     stage('Docker Build') {
+      agent any
       steps {
         script {
           app = docker.build(IMAGE_NAME)
@@ -35,6 +48,7 @@ pipeline {
     }
 
     stage('Docker Push') {
+      agent any
       steps {
         script {
           docker.withRegistry('https://index.docker.io/v1/', 'docker_hub_creds_id') {
